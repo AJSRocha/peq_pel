@@ -1,0 +1,596 @@
+---
+title: "PhD fleet"
+author: "Author - Diana Feijó"
+date: "Update Date - `r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document: default
+fig_width: 16
+fig_height: 10
+date_initial: Initial Date - 2022-01-20
+---
+<script>
+    $(document).ready(function() {
+      $head = $('#header');
+      $head.prepend('<img src=\"C:/Users/diana/Google Drive/Cavalices/Dados/Frota_cerco/ipma2.png\" style=\"float: right; width: 10%;\"/>')
+    });
+ </script>
+
+```{r, echo=F, warning=F, message = F}
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+```
+
+## Frota Cerco entre 2003-2020
+
+```{r dados finais, echo=F, message = F}
+
+rm(list = ls())
+
+setwd("C:\\Users\\diana\\Google Drive\\Cavalices\\Dados\\Frota_cerco")
+
+## vou buscar os dados já preparados para parecer do ANE
+
+load("C:\\Users\\diana\\Google Drive\\Cavalices\\Dados\\Frota_cerco\\frotacerco_land_2003_2020.RData")
+
+## agrupar dados
+frotafinal_land$mes_ano = paste(frotafinal_land$year_sale,
+                                frotafinal_land$month_sale,
+                                sep='_')
+
+```
+
+A Direção-Geral dos Recursos Naturais, Segurança e Serviços Marítimos (DGRM) classifica as embarcações registadas na frota do continente em vários segmentos e usa esta segmentação para efeitos estatísticos, tendo por base a codificação dos segmentos e pescarias estabelecidos no âmbito do  Reg. (CE) nº 2091/98, da Comissão, de 30/09/98  (Programa de Orientação Plurianual IV - POP IV) que vigorou entre 1997 e 2002. Em sequência e a partir de 1997, foram afetas ao segmento de frota 4K4, todas as embarcações que apenas estavam licenciadas com artes de cerco. No entanto e em 2011/2012, com a existência de algumas embarcações classificadas nos segmentos da frota polivalente (4K1 e 4K2) operavam maioritariamente com a arte de cerco (apesar da licença para outras artes), procedeu-se a uma reclassificação das mesmas e passaram a estar afetas ao segmento 4K4 (cerco), o que justifica o aumento de embarcações ocorrido naquele período (Fig. 1, barra rosa referente aos dados oficiais da DGRM).
+
+```{r frota dgrm, echo=F, message = F}
+
+frota_calc <- read.csv("C:\\Users\\diana\\Google Drive\\Cavalices\\Dados\\Frota_cerco\\frota_cerco_DGRM.csv", head=T)
+
+names(frota_calc) [1] <- "Year"
+
+frota_calc$diff_frota <- round(frota_calc$PSF_by_sales/frota_calc$PT_official_data, 3)
+frota_calc$prop_pil <- round(frota_calc$PSF_by_sales_PIL/frota_calc$PSF_by_sales, 3)
+frota_calc$prop_mas <- round(frota_calc$PSF_by_sales_MAS/frota_calc$PSF_by_sales, 3)
+frota_calc$prop_ane <- round(frota_calc$PSF_by_sales_ANE/frota_calc$PSF_by_sales, 3)
+
+```
+
+```{r plot comparacao frotas, fig.width=20, fig.height=10, echo=F, message = F}
+
+ frota_calc[,1:3] %>% 
+  reshape2::melt(id=c("Year")) %>% 
+ ggplot(aes(x=Year, y=value, fill=variable)) +
+ geom_bar(stat="identity", position=position_dodge()) +
+ theme_light() +
+  theme(axis.text.x = element_text(angle = 0), legend.position = "bottom") +
+  scale_x_continuous(breaks=seq(2003,2020,2)) +
+  labs(y = "Number Vessels", fill="")
+
+```
+
+Fig. 1: Comparação do número de embarcações pertencente ao segmento 4K4 vulgarmente designado por frota de cerco, usando os dados oficiais (DGRM, colunas rosas) e os desembarques diários realizadas por estas embarcações (colunas verdes), no período de 2003 a 2020.
+
+Para melhor qualificação dos desembarques provenientes da frota do cerco (Fig. 1), foram comparados os valores oficiais e os desembarques realizados pelas várias embarcações na lota de cerco em Portugal Continental e verificamos que existe uma variação do número de embarcações em média de `r round(mean(frota_calc$diff_frota)*100,2)`% (± `r round(sd(frota_calc$diff_frota)*100,2)`% SD), ao longo do período de 2003 a 2020. 
+
+#### Frota digirida ####
+
+Para o mesmo período, comparando o número de embarcações que efectivamente desembarcaram na lota do cerco e os dados oficiais da DGRM (pelo menos um vez em cada ano), observamos em média `r round(mean(frota_calc$prop_pil)*100,2)`% com desvio pardrão de ± `r round(sd(frota_calc$prop_pil)*100,2)` das embarcações a desembarcar sardinha.
+
+#### Sardinha ####
+
+```{r plot, fig.width=20, fig.height=10, echo=FALSE, warning=F, message = F}
+
+# Verificar, em cada ano, em que zona houve embarcaçoes com desembarques com e sem biqueirao.
+
+k <- "PIL"
+
+temp <- list()
+for(i in 2003:2020){
+  temp[[i]]<-
+frotafinal_land %>% 
+  filter(year_sale == i) %>%
+  mutate(IEMBARCA = droplevels(IEMBARCA),
+         year_sale = droplevels(year_sale)) %>%
+  group_by(year_sale, IEMBARCA, .drop = F) %>%
+  summarise(QVENDA = sum(QVENDA[EESPECIE== k])) %>% ## biqueirao
+  transmute(IEMBARCA = IEMBARCA,
+            positivo = case_when(QVENDA > 0 ~ 1,
+            TRUE ~ 0))}
+frotices <-do.call(rbind, temp)
+
+land<-merge(frotafinal_land, frotices,
+      by = c("IEMBARCA","year_sale"),
+      all.x = T, all.y = F)
+
+```
+
+Posteriormente, separamos a frota obtida em 2 estratos – as embarcações com desembarque de, pelo menos, uma vez a espécie sardinha durante o ano e as embarcação sem qualquer desembarque de sardinha (Fig. 2). 
+
+```{r plot T and False PIL, fig.width=20, fig.height=10, echo=F, message = F}
+
+land %>%
+  group_by(year_sale,zona,positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"])/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"])/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"])/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"])/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"])/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")])/1000
+            ) %>%
+  reshape2::melt(id.vars=c("year_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without PIL', '1' = 'landings with PIL')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=year_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_grid(positivo~zona) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 2: Comparação da composição de desembarques das espécies pelágicas por ano e zona, no período de 2003 a 2020, por estrato de desembarque – em cima, frota que desembarcou sardinha, em baixo, zero desembarques sardinha. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+Comparando as espécies-alvo dos dois estratos (Fig. 2), podemos observar desembarques importantes de sardinha e de cavala em toda a série temporal e nas três zonas. O desembarque de biqueirão torna-se uma desembarque importante no Noroeste a partir de 2016. Olhando para a frota que nunca desembarcou biqueirão, as espécies alvo serão espécies não pelágicas (por exemplo, tainha, sargos, robalos e corvinas entre outras) e cavala, de forma irregular ao longo dos anos e zonas.
+Com a indisponibilidade de capturar sardinha ao longo de todo o ano atrvés de limites diários e gestão do total desembarcado anual a partir de 2013, a cavala tornou-se uma espécie-alvo de Peniche para Sul ou com captura oportunista no Noroeste da costa Portuguesa.
+
+```{r plot month PIL, echo=FALSE, warning=F, message = F}
+## calculo a cada mes das especies desembarcadas
+
+temp<-list()
+j = 0
+for(i in unique(frotafinal_land$mes_ano)){
+  j = j + 1
+  temp[[j]]<-
+    frotafinal_land %>% 
+    filter(mes_ano == i) %>%
+    mutate(IEMBARCA = droplevels(IEMBARCA),
+           month_sale = droplevels(month_sale)) %>%
+    group_by(mes_ano, IEMBARCA, .drop = F) %>%
+    summarise(QVENDA = sum(QVENDA[EESPECIE== k])) %>% ## biqueirao
+    transmute(IEMBARCA = IEMBARCA,
+              positivo = case_when(QVENDA > 0 ~ 1,
+                                   TRUE ~ 0))}
+frotices_month <-do.call(rbind, temp)
+
+land_month<-merge(frotafinal_land, frotices_month,
+                  by = c("IEMBARCA","mes_ano"),
+                  all.x = T, all.y = F)
+```
+
+Com a indisponibilidade de capturar sardinha ao longo de todo o ano, a partir de 2013, como se tornaram os desembarques mensais? 
+Para isso, foi analisados a composição dos desembarques mensais antes da aplicação das medidas restritivas ao desembarque da sardinha no período de 2003-2012 (Fig. 3) e pós medidas, 2013-2020 (Fig. 4).
+
+```{r plot T and False month PIL, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+land_month %>%
+    filter (year_sale %in% c(2003:2012)) %>% 
+  group_by(month_sale,zona,positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"])/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"])/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"])/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"])/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"])/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")])/1000
+            ) %>%
+  reshape2::melt(id.vars=c("month_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without PIL', '1' = 'landings with PIL')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=month_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_grid(positivo~zona) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig.3: Comparação da composição de desembarques das várias espécies pelágicas por mês da frota digirida a sardinha ou não, no período de 2003 a 2012. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+Antes da implementação do plano de gestão da sardinha (2012-2018), para a frota dedicada à sardinha captura maioritariamente sardinha na costa Noroeste e enquanto que no Sudoeste e Sul, a frota tinha 2 espécies alvo- sardinha e cavala. O carapau-branco sempre esteve presente nas capturas mensais mas de forma residual.
+Em relação à frota não dedicada ao desembarque de sardinha, a norte as espécies alvo são o carapau-branco, espécies não pelágicos e pontualmente biqueirão entre 2003 e 2012. Nas outras zonas, a cavala é a espécie mais desembarcada além de outras espécies não pelágicas (Fig. 3).
+
+```{r plot PIL, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+land_month %>%
+    filter (year_sale %in% c(2013:2020)) %>% 
+  group_by(month_sale,zona,positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"])/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"])/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"])/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"])/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"])/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")])/1000
+            ) %>%
+  reshape2::melt(id.vars=c("month_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without PIL', '1' = 'landings with PIL')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=month_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_grid(positivo~zona) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 4: Comparação da composição de desembarques das espécies pelágicas por mês, no período de 2013 a 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+Com o plano de gestão da sardinha, agregando o período de 2013-2020, não se consegue grande alterçoes para a frota dedicada à sardinha na costa Noroeste e enquanto que no Sudoeste e Sul, a frota tinha 2 espécies alvo- sardinha e cavala. O carapau-branco sempre esteve presente nas capturas mensais mas de forma residual.
+Em relação à frota não dedicada ao desembarque de sardinha, a norte as espécies alvo são biqueirão e cavala entre 2013 e 2020. Nas outras zonas, a cavala é a espécie mais desembarcada além de outras espécies não pelágicas (Fig. 4).
+
+```{r plot por esp e por mes PIL, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+land_month %>%
+  filter (year_sale %in% c(2013:2020) & zona %in% c("NW")) %>%
+  group_by(month_sale, year_sale, zona, positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"], na.rm=T)/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"], na.rm=T)/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"], na.rm=T)/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"], na.rm=T)/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"], na.rm=T)/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")],na.rm=T)/1000
+            ) %>%
+  reshape2::melt(id.vars=c("month_sale","year_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without PIL', '1' = 'landings with PIL')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=month_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_wrap(year_sale~., ncol=3) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 5: Comparação da composição de desembarques das espécies pelágicas por mês na zona Noroeste, no período de 2013 a 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+Na zona Noroeste, com pormenor na Figura 5, é possivel verificar alterações mensais do padrão de desembarque para os primeiros meses do ano, aonde a partir 2015, existe regulamentação a impedir o desembarque de sardinha até Abril/Maio e depois de Outubro para a frente.
+
+#### Cavala ####
+
+Para o mesmo período, comparando o número de embarcações que efectivamente desembarcaram na lota do cerco e a espécie cavala (pelo menos um vez em cada ano), observamos em média `r round(mean(frota_calc$prop_mas)*100,2)`% (± `r round(sd(frota_calc$prop_mas)*100,2)`% SD) das embarcações a desembarcar cavala.
+
+```{r plot MAS, echo=FALSE, warning=F, message = F}
+
+# Verificar, em cada ano, em que zona houve embarcaçoes com desembarques com e sem biqueirao.
+
+k <- "MAS"
+
+temp <- list()
+for(i in 2003:2020){
+  temp[[i]]<-
+frotafinal_land %>% 
+  filter(year_sale == i) %>%
+  mutate(IEMBARCA = droplevels(IEMBARCA),
+         year_sale = droplevels(year_sale)) %>%
+  group_by(year_sale, IEMBARCA, .drop = F) %>%
+  summarise(QVENDA = sum(QVENDA[EESPECIE== k])) %>% ## biqueirao
+  transmute(IEMBARCA = IEMBARCA,
+            positivo = case_when(QVENDA > 0 ~ 1,
+            TRUE ~ 0))}
+frotices <-do.call(rbind, temp)
+
+land<-merge(frotafinal_land, frotices,
+      by = c("IEMBARCA","year_sale"),
+      all.x = T, all.y = F)
+
+```
+
+Seguindo a lógica anterior, separamos a frota obtida em 2 estratos – as embarcações com desembarque de, pelo menos, uma vez a espécie cavala durante o ano e as embarcação sem qualquer desembarque de cavala (Fig. 6). 
+
+```{r plot T and False MAS, fig.width=20, fig.height=10, echo=F, message = F}
+
+land %>%
+  group_by(year_sale,zona,positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"])/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"])/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"])/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"])/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"])/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")])/1000
+            ) %>%
+  reshape2::melt(id.vars=c("year_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without MAS', '1' = 'landings with MAS')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=year_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_grid(positivo~zona) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 6: Comparação da composição de desembarques das espécies pelágicas por ano e zona, no período de 2003 a 2020, por estrato de desembarque – em cima, frota que desembarcou cavala, em baixo, zero desembarques cavala. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+Olhando para as frotas-alvo da sardinha (Fig. 2) e da cavala (Fig 6), verficam-se desembarques importantes de sardinha e de cavala em toda a série temporal e nas três zonas.
+Agora quando a cavala não é espécie-alvo, ai verificamos diferenças significativas. Até a crise da sardinha (2012), as embarcações desembarcavam sardinha na zona Sudoeste. desembarcando espécies não pelagicas no final do período (2013-2020). Quer a Noroeste quer a Sul, existem anos em que não existe frota não dedicada à cavala e quando existe, dividem as suas capturas à sardih, biqueirão ou espécies não pelágicas.
+
+```{r plot month MAS, echo=FALSE, warning=F, message = F}
+## calculo a cada mes das especies desembarcadas
+
+temp<-list()
+j = 0
+for(i in unique(frotafinal_land$mes_ano)){
+  j = j + 1
+  temp[[j]]<-
+    frotafinal_land %>% 
+    filter(mes_ano == i) %>%
+    mutate(IEMBARCA = droplevels(IEMBARCA),
+           month_sale = droplevels(month_sale)) %>%
+    group_by(mes_ano, IEMBARCA, .drop = F) %>%
+    summarise(QVENDA = sum(QVENDA[EESPECIE== k])) %>% ## biqueirao
+    transmute(IEMBARCA = IEMBARCA,
+              positivo = case_when(QVENDA > 0 ~ 1,
+                                   TRUE ~ 0))}
+frotices_month <-do.call(rbind, temp)
+
+land_month<-merge(frotafinal_land, frotices_month,
+                  by = c("IEMBARCA","mes_ano"),
+                  all.x = T, all.y = F)
+```
+
+Na frota dedicada à cavala, os desembarques mensais não apresentam padrões importantes. Quanto à frota que não desembarcou cavala, ai assim, vemos que a sardinha é marioritarimente espécie-alvo (Fig. 7). 
+
+```{r plot T and False month MAS, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+land_month %>%
+    filter (year_sale %in% c(2005:2012)) %>% 
+  group_by(month_sale,zona,positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"])/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"])/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"])/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"])/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"])/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")])/1000
+            ) %>%
+  reshape2::melt(id.vars=c("month_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without MAS', '1' = 'landings with MAS')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=month_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_grid(positivo~zona) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig.7: Comparação da composição de desembarques das várias espécies pelágicas por mês da frota digirida a cavala ou não, no período de 2003 a 2012. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+```{r plot 03-20 MAS, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+land_month %>%
+  filter (year_sale %in% c(2003:2020)) %>%
+  group_by(month_sale, year_sale, zona, positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"], na.rm=T)/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"], na.rm=T)/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"], na.rm=T)/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"], na.rm=T)/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"], na.rm=T)/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")],na.rm=T)/1000
+            ) %>%
+  reshape2::melt(id.vars=c("month_sale","year_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without MAS', '1' = 'landings with MAS')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=month_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_wrap(year_sale~., ncol=3) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 8: Comparação da composição de desembarques das espécies pelágicas por mês, no período de 2003 a 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+A partir de 2012, os desembarques mensais verifica-se alteraçõs de padrões em que existe um equilibrio entre desembarques de cavala e sardinha (Fig. 8). 
+
+```{r plot 13-20 MAS, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+land_month %>%
+  filter (year_sale %in% c(2013:2020) & zona %in% c("NW")) %>%
+  group_by(month_sale, year_sale, zona, positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"], na.rm=T)/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"], na.rm=T)/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"], na.rm=T)/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"], na.rm=T)/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"], na.rm=T)/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")],na.rm=T)/1000
+            ) %>%
+  reshape2::melt(id.vars=c("month_sale","year_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without MAS', '1' = 'landings with MAS')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=month_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_wrap(year_sale~., ncol=3) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 9: Comparação da composição de desembarques das espécies pelágicas por mês na zona Noroeste, no período de 2013 a 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+Em especial, na zona noroeste, que verficamos alterações mensais nos desembarques (Fig. 9). Observa-se desembarques de espécies não peláigicos sendo substituido por biqueirão no primeiros meses dos ano, terminando o ano com desembarques de biquerião e carapau-branco nos últimos anos.
+
+#### Biqueirão ####
+
+Para o mesmo período, comparando o número de embarcações que efectivamente desembarcaram na lota do cerco e a espécie biqueirão (pelo menos um vez em cada ano), observamos em média `r round(mean(frota_calc$prop_ane)*100,2)`% (± `r round(sd(frota_calc$prop_ane)*100,2)`% SD) das embarcações a desembarcar biqueirão.
+
+
+```{r plot ANE, echo=FALSE, warning=F, message = F}
+
+# Verificar, em cada ano, em que zona houve embarcaçoes com desembarques com e sem biqueirao.
+
+k <- "ANE"
+
+temp <- list()
+for(i in 2003:2020){
+  temp[[i]]<-
+frotafinal_land %>% 
+  filter(year_sale == i) %>%
+  mutate(IEMBARCA = droplevels(IEMBARCA),
+         year_sale = droplevels(year_sale)) %>%
+  group_by(year_sale, IEMBARCA, .drop = F) %>%
+  summarise(QVENDA = sum(QVENDA[EESPECIE== k])) %>% ## biqueirao
+  transmute(IEMBARCA = IEMBARCA,
+            positivo = case_when(QVENDA > 0 ~ 1,
+            TRUE ~ 0))}
+frotices <-do.call(rbind, temp)
+
+land<-merge(frotafinal_land, frotices,
+      by = c("IEMBARCA","year_sale"),
+      all.x = T, all.y = F)
+
+```
+
+Posteriormente, separamos a frota obtida em 2 estratos – as embarcações com desembarque de, pelo menos, uma vez a espécie biqueirão durante o ano e as embarcação sem qualquer desembarque de biqueirão (Fig. 10). 
+
+```{r plot T and False ANE, fig.width=20, fig.height=10, echo=F, message = F}
+
+land %>%
+  group_by(year_sale,zona,positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"])/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"])/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"])/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"])/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"])/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")])/1000
+            ) %>%
+  reshape2::melt(id.vars=c("year_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without ANE', '1' = 'landings with ANE')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=year_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_grid(positivo~zona) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 10: Comparação da composição de desembarques das espécies pelágicas por ano e zona, no período de 2003 a 2020, por estrato de desembarque – em cima, frota que desembarcou biqueirão, em baixo, zero desembarques biqueirão. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+Comparando as espécies-alvo dos dois estratos (Fig. 10), podemos observar desembarques importantes de sardinha e de cavala em toda a série temporal e nas três zonas. O desembarque de biqueirão torna-se uma desembarque importante no Noroeste, a partir de 2016. Olhando para a frota que nunca desembarcou biqueirão, as 2 espécies alvo serão a sardinha e cavala, tendo desembarques importantes de outras espécies e de forma geral, não pelágicas.
+
+```{r plot month ANE, echo=FALSE, warning=F, message = F}
+
+temp<-list()
+j = 0
+for(i in unique(frotafinal_land$mes_ano)){
+  j = j + 1
+  temp[[j]]<-
+    frotafinal_land %>% 
+    filter(mes_ano == i) %>%
+    mutate(IEMBARCA = droplevels(IEMBARCA),
+           month_sale = droplevels(month_sale)) %>%
+    group_by(mes_ano, IEMBARCA, .drop = F) %>%
+    summarise(QVENDA = sum(QVENDA[EESPECIE== k ])) %>% ## biqueirao
+    transmute(IEMBARCA = IEMBARCA,
+              positivo = case_when(QVENDA > 0 ~ 1,
+                                   TRUE ~ 0))}
+frotices_month <-do.call(rbind, temp)
+
+land_month<-merge(frotafinal_land, frotices_month,
+                  by = c("IEMBARCA","mes_ano"),
+                  all.x = T, all.y = F)
+```
+
+Com a indisponibilidade de capturar sardinha ao longo de todo o ano, a partir de 2013, o biqueirão tornou-se uma espécie-alvo ou a sua captura é oportunista devido ao aumento da sua disponibilidade em especial no Noroeste da costa Portuguesa desde 2016? 
+Para isso, além do período completo de 2003-2020 (Fig. 11), foi analisados a composição dos desembarques mensais em especial do 2015-2020 (Fig. 12), 
+
+```{r plot T and False month ANE, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+land_month %>%
+  group_by(month_sale,zona,positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"])/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"])/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"])/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"])/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"])/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")])/1000
+            ) %>%
+  reshape2::melt(id.vars=c("month_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without ANE', '1' = 'landings with ANE')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=month_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_grid(positivo~zona) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 11: Comparação da composição de desembarques das espécies pelágicas por mês para zona Norte, no período de 2003 a 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+
+Entre 2003 e 2011, a sardinha é a espécie-alvo da pesca do cerco no Noroeste de Portugal (Fig. 11). Com as limitações de desembarque, verifica-se o desembarques outras espécies como cavala, carapau-branco e outras espécies como, por exemplo, tainha, sargos, robalos e corvinas, mais recentemente.
+
+O desembarque de biqueirão torna-se mais frequente nos últimos 6 anos e observa-se o seu desembarque ao longo do ano, em vez de desembarques pontuais observados no passado. Entre 2016 e 2020, principalmente nos primeiros meses do ano, é a espécie-alvo da pesca do cerco no Noroeste de Portugal, com a impossibilidade desembarcar sardinha (Fig. 12). 
+
+```{r plot 15_20 ANE, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+land_month %>%
+  filter (year_sale %in% c(2015:2020) & zona %in% c("NW")) %>%
+  group_by(month_sale, year_sale, zona, positivo) %>%
+  summarise(PIL=sum(QVENDA[EESPECIE=="PIL"], na.rm=T)/1000, 
+            MAS=sum(QVENDA[EESPECIE=="MAS"], na.rm=T)/1000,  
+            HOM=sum(QVENDA[EESPECIE=="HOM"], na.rm=T)/1000, 
+            ANE=sum(QVENDA[EESPECIE=="ANE"], na.rm=T)/1000, 
+            JAA=sum(QVENDA[EESPECIE=="JAA"], na.rm=T)/1000,
+            OTH=sum(QVENDA[!EESPECIE %in% c("PIL","MAS","HOM","ANE","JAA")],na.rm=T)/1000
+            ) %>%
+  reshape2::melt(id.vars=c("month_sale","year_sale","zona","positivo")) %>%
+  mutate(positivo = recode(positivo, '0' = 'landings without ANE', '1' = 'landings with ANE')) %>% 
+  ggplot() +
+  # cores.sp+ ## caso quisermos cores FAO
+  geom_bar(aes(x=month_sale, y=value, fill=variable), stat="identity", position="fill") +
+  theme_light()+
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") +
+  facet_wrap(year_sale~., ncol=3) +
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "%", fill='')+
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 12: Comparação da composição de desembarques das espécies pelágicas por mês para zona Norte, no período de 2003 a 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão, JAA – carapau-negrão, OTH – todas as restantes espécies.
+

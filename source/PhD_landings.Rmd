@@ -1,0 +1,1108 @@
+---
+title: "PhD Landings"
+author: "Author - Diana Feijó"
+date: "Update Date - `r Sys.Date()`"
+output:
+  word_document: default
+  pdf_document: default
+fig_height: 10
+fig_width: 16
+date_initial: Initial Date - 2022-01-20
+---
+<script>
+    $(document).ready(function() {
+      $head = $('#header');
+      $head.prepend('<img src=\"C:/Users/diana/Google Drive/Cavalices/Dados/Frota_cerco/ipma2.png\" style=\"float: right; width: 10%;\"/>')
+    });
+ </script>
+
+```{r package, echo=F, warning=F, message = F}
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+```
+
+```{r dados finais, echo=F, message = F}
+
+rm(list = ls())
+
+setwd("C:\\Users\\diana\\Google Drive\\Cavalices\\Dados\\Frota_cerco")
+
+## vou buscar os dados já preparados para parecer do ANE
+
+load("C:\\Users\\diana\\Google Drive\\Cavalices\\Dados\\Frota_cerco\\frotacerco_land_2003_2020.RData")
+
+```
+
+```{r funcao}
+## funcao para breaks x axis
+
+every_nth <- function(n) {
+  return(function(x) {x[c(TRUE, rep(FALSE, n - 1))]})
+}
+
+```
+
+Fica aqui a série temporal dos desembarques dos principais pelágicos realizados pela frota de cerco por ano e zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 1 a 3), verificando-se o aumento de desembarques de biqueirão nos últimos 5 anos a Noroeste da costa portuguesa. 
+
+```{r plot desembarques area, fig.width=20, fig.height=10, echo=F, message = F}
+
+pelagicos <- c("PIL", "MAS", "HOM", "ANE") ## confirmar se não quero acrscentar mais spp
+
+frotafinal_land[frotafinal_land$EESPECIE %in% pelagicos,] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.8) +
+    facet_wrap(.~EESPECIE, scales= "free")+
+      theme_bw()+
+      # theme(panel.background = element_blank(),
+      # axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.position="none") +
+    labs(y = "Landgings (thousand ton)", fill='')+
+  scale_fill_brewer(palette="Paired") +
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+```
+
+Fig. 1: Série temporal dos desembarques anuais para os 4 principais pelágicos  realizados pela frota de cerco, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% pelagicos,] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.8) +
+    facet_wrap(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.position="none") +
+    labs(y = "Landgings (thousand ton)", fill='')+
+  scale_fill_brewer(palette="Paired") +
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+```
+
+Fig. 2: Série temporal dos desembarques anuais para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+```{r, fig.width=20, fig.height=10, echo=F, warning=F}
+
+plotPIL <- frotafinal_land[frotafinal_land$EESPECIE == "PIL",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.8, color = "blue") +
+    facet_grid(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.position="none") +
+    labs(y = "Landgings (thousand ton)", fill='')+
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+plotMAS <-frotafinal_land[frotafinal_land$EESPECIE == "MAS",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.8, color = "green") +
+    facet_grid(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.position="none") +
+     labs(y = "", x="")+
+    # labs(y = "Landgings (thousand ton)", fill='')+
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+plotHOM <-frotafinal_land[frotafinal_land$EESPECIE == "HOM",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.8, color = "orange") +
+    facet_grid(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.position="none") +
+     labs(y = "", x="")+
+    # labs(y = "Landgings (thousand ton)", fill='')+
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+plotANE <-frotafinal_land[frotafinal_land$EESPECIE == "ANE",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.8, color = "red") +
+    facet_grid(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.position="none") +
+     labs(y = "", x="")+
+    # labs(y = "Landgings (thousand ton)", fill='')+
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+grid.arrange(plotPIL, plotMAS, plotHOM, plotANE, ncol=4)
+
+```
+
+Fig. 2a: Série temporal dos desembarques anuais para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+```{r plot desembarqes mea ano area,fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% pelagicos,] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale,mes_ano, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=mes_ano, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.8) +
+    facet_wrap(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.position="none") +
+    labs(y = "Landgings (ton)", fill='')+
+   scale_x_discrete(breaks = every_nth(n = 24)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+```
+
+Fig. 3: Série temporal dos desembarques mensais para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+plotPIL1 <- frotafinal_land[frotafinal_land$EESPECIE == "PIL",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, mes_ano, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=mes_ano, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.5, color = "blue") +
+    facet_grid(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 90), legend.position="none") +
+      # labs(y = "", x="")+
+    labs(y = "Landings (ton)", x= "Month_year", fill='')+
+  scale_x_discrete(breaks = every_nth(n = 24)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+plotMAS1 <-frotafinal_land[frotafinal_land$EESPECIE == "MAS",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale,mes_ano, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=mes_ano, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.5, color = "green") +
+    facet_grid(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 90), legend.position="none") +
+      labs(y = "", x="")+
+    # labs(y = "Landings (ton)", fill='')+
+  scale_x_discrete(breaks = every_nth(n = 24)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+plotHOM1 <-frotafinal_land[frotafinal_land$EESPECIE == "HOM",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale,mes_ano, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=mes_ano, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.5, color = "orange") +
+    facet_grid(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 90), legend.position="none") +
+      labs(y = "", x="Month_year")+
+    # labs(y = "Landings (ton)", fill='')+
+  scale_x_discrete(breaks = every_nth(n = 24)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+plotANE1 <-frotafinal_land[frotafinal_land$EESPECIE == "ANE",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, mes_ano, zona, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=mes_ano, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.5, color = "red") +
+    facet_grid(zona~EESPECIE, scales= "free")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 90), legend.position="none") +
+      labs(y = "", x="")+
+    # labs(y = "Landings (ton)", fill='')+
+  scale_x_discrete(breaks = every_nth(n = 24)) +
+  scale_fill_brewer(palette="Paired") +
+geom_smooth(method="lm", formula=y~x, color="black", linetype = 2,size = 0.5)
+
+grid.arrange(plotPIL1, plotMAS1, plotHOM1, plotANE1, ncol=4)
+
+```
+
+Fig. 3a: Série temporal dos desembarques mensais para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+Caso olharmos para valores atingidos por cada uma das espécies pelágicas e o seu desembarque acumulado, podemos ter uma ideia da dinâmica de cada zona.
+
+```{r}
+
+sum_land <- frotafinal_land %>% 
+    group_by(EESPECIE, zona, year_sale) %>%
+    summarise(VVENDA_final= sum(VVENDA)/1000000,   # milhoes euros
+              QVENDA_final= sum(QVENDA)/1000000) # mil toneladas
+ 
+# sort(sum_land$QVENDA_final, decreasing = T)
+```
+
+Tabela 3: Desembarques  no cerco e respectivo valor economico das espécies desembarcadas pelágicas por ano e zona entre 2005-2020.
+
+```{r tabela 1, echo=T}
+
+frotafinal_land %>% 
+    group_by(EESPECIE, year_sale) %>%
+    summarise(VVENDA_final= sum(VVENDA)/1000000,   # milhoes euros
+              QVENDA_final= sum(QVENDA)/1000000) 
+
+```
+
+Tabela 2: Desembarques  no cerco e respectivo valor economico das espécies desembarcadas com mais de mil ton por ano, por ano e zona entre 2005-2020.
+
+```{r tabela 2, echo=T}
+sum_land %>% 
+  filter(QVENDA_final>1) ## desembarques com mais 1 mil ton
+
+```
+
+Tabela 3: Desembarques  no cerco e respectivo valor economico das espécies desembarcadas com mais de 1 ton por ano, por ano e zona entre 2005-2020.
+
+```{r tabela 3, echo=T}
+
+sum_land %>% 
+  filter(QVENDA_final>0.001) ## desembarques com mais 1 ton
+
+```
+
+```{r, fig.width=20, fig.height=10}
+
+frotafinal_land %>% 
+    group_by(EESPECIE, zona, year_sale) %>%
+    summarise(VVENDA_final= sum(VVENDA)/1000000, # milhoes euros
+              QVENDA_final= sum(QVENDA)/1000) %>%  # toneladas
+    filter(EESPECIE %in% pelagicos) %>% 
+    ggplot(aes(x=year_sale)) +
+  geom_line(aes(x=year_sale, y=VVENDA_final, group=EESPECIE, color=EESPECIE), size = 0.8) +
+ theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0)) +
+  facet_wrap(.~zona) +
+   scale_x_discrete(breaks = every_nth(n = 2)) +
+  scale_color_discrete(name="") +
+  labs(x = "Ano", y = "Valor (millions eur)")
+
+```
+
+Fig. 4: Série temporal do valores anuais para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+```{r, fig.width=20, fig.height=15, echo=F}
+
+## para calcular prop de eixos
+
+# x <- frotafinal_land %>% 
+#     group_by(EESPECIE, zona, year_sale) %>%
+#     summarise(VVENDA_final= sum(VVENDA)/1000000,   # milhoes euros
+#               QVENDA_final= sum(QVENDA)/1000000) %>%  # mil toneladas
+#     filter(EESPECIE %in% pelagicos)
+# 
+# max(x$QVENDA_final)/max(x$VVENDA_final)
+
+frotafinal_land %>% 
+    group_by(EESPECIE, zona, year_sale) %>%
+    summarise(VVENDA_final= sum(VVENDA)/1000000,   # milhoes euros
+              QVENDA_final= sum(QVENDA)/1000000) %>%  # mil toneladas
+    filter(EESPECIE %in% pelagicos) %>% 
+    ggplot(aes(x=year_sale)) +
+  geom_line(aes(x=year_sale, y=QVENDA_final, group=EESPECIE, color= EESPECIE),size = 0.8) +
+  geom_line(aes(x=year_sale, y=VVENDA_final, group=EESPECIE, color=EESPECIE), color="black", size = 0.8) +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 0),legend.position="bottom") +
+  facet_wrap(EESPECIE~zona, scales= "free", ncol = 3) +
+   # scale_color_discrete(name="") +
+   scale_x_discrete(breaks = every_nth(n = 2)) +
+   scale_y_continuous("Landings (thousand ton)", 
+                     sec.axis = sec_axis(~ . *1.7, ## imptt ver a prop de escalas e é com *n qquer coisa
+                      name = "valor (millions eur)")) 
+
+```
+
+Fig. 4a: Série temporal do valores anuais versus desembarques para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+```{r, fig.width=20, fig.height=15}
+
+frotafinal_land %>% 
+    group_by(EESPECIE, zona, year_sale, mes_ano) %>%
+    summarise(VVENDA_final= sum(VVENDA)/1000000, # milhoes euros
+              QVENDA_final= sum(QVENDA)/1000) %>%  # toneladas
+    filter(EESPECIE %in% pelagicos) %>% 
+    ggplot(aes(x=year_sale)) +
+  geom_line(aes(x=mes_ano, y=VVENDA_final, group=EESPECIE, color=EESPECIE), size = 0.8) +
+ theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.position = "none", element_blank()) +
+  facet_wrap(EESPECIE~zona, scales="free", ncol=3) +
+   scale_x_discrete(breaks = every_nth(n = 24)) +
+  scale_color_discrete(name="") +
+  labs(x = "month_sale", y = "Valor (millions eur)")
+
+```
+
+Fig. 5: Série temporal do valores mensais para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+```{r,fig.width=20, fig.height=18}
+
+## para calcular prop de eixos
+
+# x <- frotafinal_land %>%
+#     group_by(EESPECIE, zona, year_sale, mes_ano) %>%
+#     summarise(VVENDA_final= sum(VVENDA)/1000000,   # milhoes euros
+#               QVENDA_final= sum(QVENDA)/1000000) %>%  # mil toneladas
+#     filter(EESPECIE %in% pelagicos)
+# 
+# max(x$QVENDA_final)/max(x$VVENDA_final)
+
+frotafinal_land %>% 
+    group_by(EESPECIE, zona, year_sale, mes_ano) %>%
+    summarise(VVENDA_final= sum(VVENDA)/1000000,   # milhoes euros
+              QVENDA_final= sum(QVENDA)/1000000) %>%  # mil toneladas
+    filter(EESPECIE %in% pelagicos) %>% 
+    ggplot(aes(x=year_sale)) +
+  geom_line(aes(x=mes_ano, y=QVENDA_final, group=EESPECIE, color= EESPECIE),size = 0.8) +
+  geom_line(aes(x=mes_ano, y=VVENDA_final, group=EESPECIE, color=EESPECIE), color="black", size = 0.8) +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 0),legend.position="bottom", legend.title = element_blank()) +
+  facet_wrap(EESPECIE~zona, scales= "free", ncol = 3) +
+   # scale_color_discrete(name="") +
+   scale_x_discrete(breaks = every_nth(n = 2)) +
+   scale_y_continuous("Landings (thousand ton)", 
+                     sec.axis = sec_axis(~ . *0.7, ## imptt ver a prop de escalas e é com *n qquer coisa
+                      name = "valor (millions eur)")) 
+
+```
+
+Fig. 5a: Série temporal do valores anuais versus desembarques para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+## Nota: Incluir as outras spp
+
+```{r plot sem prop area, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% pelagicos,] %>%
+  filter(year_sale %in% c(2005:2020)) %>%
+    group_by(year_sale, zona, EESPECIE) %>%
+  summarise(QVENDA=sum(QVENDA)/1000000) %>%
+  ggplot(aes(x=year_sale, y=QVENDA)) +
+    geom_bar(aes(fill=EESPECIE), stat='identity', position="stack") +
+    facet_wrap(.~zona)+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 90),legend.title = element_blank()) +
+    labs(y = "Landings (thousand ton)")+
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 6: Desembarques acumulados para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020.
+
+```{r plot em prop area, fig.width=20, fig.height=10, echo=F, warning=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% pelagicos,] %>% 
+  filter(year_sale %in% c(2005:2020)) %>%
+    group_by(year_sale, zona, EESPECIE) %>%
+  summarise(QVENDA=sum(QVENDA)/1000) %>%
+  ggplot(aes(x=year_sale, y=QVENDA, group=zona, fill=EESPECIE)) +
+    geom_bar(stat= "identity", position="fill") +
+    facet_wrap(.~zona)+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 90),legend.title = element_blank()) +
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "landing pelagic species (%)") +
+  scale_fill_brewer(palette="Paired")
+
+``` 
+
+Fig. 7: Desembarques em % para os 4 principais pelágicos realizados pela frota de cerco por zona, desde 2005 até 2020.
+
+```{r,fig.width=20, fig.height=10}
+
+frotafinal_land %>%
+  filter(year_sale %in% c(2005:2020)) %>%
+    group_by(year_sale, zona, EESPECIE, ETAMANHO) %>%
+  summarise(QVENDA=sum(QVENDA)/1000000) %>%
+  filter(EESPECIE %in% pelagicos) %>% 
+  ggplot(aes(x=year_sale, y=QVENDA)) +
+    geom_bar(aes(fill=EESPECIE), stat='identity', position="stack") +
+    facet_grid(ETAMANHO~zona, scales="free" )+
+      theme_bw()+  
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "bottom") +
+    labs(y = "Landings (thousand ton)")+
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+  scale_fill_brewer(palette="Paired")
+
+```
+
+Fig. 8: Desembarques acumulados para os 4 principais pelágicos realizados pela frota de cerco por zona e por tamanho comercial, desde 2005 até 2020.
+
+Fica aqui a série temporal dos desembarques de principais pelágicos realizados pela frota de cerco por ano, porto e zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 9 a 11). 
+
+```{r plot desembarques porto area NW, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% pelagicos & frotafinal_land$zona=="NW",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(PORTO != "AFURADA") %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.6) +
+    facet_grid(PORTO~zona, scales= "free_y")+
+    theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "bottom") +
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "Landgings (thousand ton)")
+
+```
+ 
+Fig. 9: Série temporal do valores anuais para os 4 principais pelágicos realizados pela frota de cerco por zona e principais portos de desembarques NW, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+ 
+```{r plot desembarques porto area SW, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% pelagicos & frotafinal_land$zona=="SW",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(!PORTO %in% c("CASCAIS", "COSTA DA CAPARICA")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.6) +
+    facet_grid(PORTO~zona, scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "bottom") +
+   scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "Landings (thousand ton)")
+
+```
+
+Fig. 10: Série temporal do valores anuais para os 4 principais pelágicos realizados pela frota de cerco por zona e principais portos de desembarques SW, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+```{r plot desembarques porto area Sul, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% pelagicos & frotafinal_land$zona=="S",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(!PORTO %in% c("TAVIRA", "VRSA")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+     geom_line(size = 0.6) +
+    facet_grid(PORTO~zona, scales= "free_y")+
+     theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "bottom") +
+   scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "Landings (thousand ton)")
+
+```
+
+Fig. 11: Série temporal do valores anuais para os 4 principais pelágicos realizados pela frota de cerco por zona e principais portos de desembarques S, desde 2005 até 2020. Legenda de cores: PIL – sardinha, MAS – cavala, HOM – carapau-branco, ANE – biqueirão.
+
+Apresenta-se série temporal dos desembarques  de sardinha realizados pela frota de cerco por ano, porto e zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 12 a 15).  
+ 
+```{r plot porto area PIL, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("PIL"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="NW") %>% 
+  filter(!PORTO %in% c("AFURADA", "VIANA DO CASTELO", "POVOA DO VARZIM")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+   geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+     theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "bottom") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "PIL (ton)")
+
+```
+ 
+Fig. 12: Desembarques anuais de sardinha realizados pela frota de cerco por zona e principais portos de desembarques NW, desde 2005 até 2020.
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("PIL"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="SW") %>% 
+  filter(!PORTO %in% c("CASCAIS", "COSTA DA CAPARICA")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+     theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "bottom") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "PIL (ton)")
+
+```
+
+Fig. 13: Desembarques anuais de sardinha realizados pela frota de cerco por zona e principais portos de desembarques SW, desde 2005 até 2020.
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("PIL"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="S") %>% 
+  filter(!PORTO %in% c("TAVIRA", "VRSA")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "bottom") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "PIL (ton)")
+
+``` 
+
+Fig. 14: Desembarques anuais de sardinha realizados pela frota de cerco por zona e principais portos de desembarques S, desde 2005 até 2020.
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+Portos_menores_PIL <- c("AFURADA", "VIANA DO CASTELO", "POVOA DO VARZIM",
+                    "CASCAIS", "COSTA DA CAPARICA", 
+                    "TAVIRA", "VRSA")
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("PIL"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  # filter(zona =="S") %>% 
+  filter(!PORTO %in% Portos_menores_PIL) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_wrap(zona~PORTO, scales= "free_y", ncol=4)+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "bottom") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "PIL (ton)")
+
+``` 
+
+Fig. 15: Desembarques anuais de sardinha realizados pela frota de cerco por zona e principais portos de desembarques nacionais, desde 2005 até 2020. 
+
+Apresenta-se série temporal dos desembarques mensais  de sardinha realizados pela frota de cerco por zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 16 a 17).
+
+```{r plot desembarques mes ano ST area PIL 2, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE=="PIL",] %>%
+  filter(year_sale %in% c(2005:2020)) %>%
+  # filter(zona == "S") %>%
+  group_by(year_sale, mes_ano) %>%
+  summarise(QVENDA=sum(QVENDA)/1000) %>%
+    ggplot(aes(x=mes_ano, y=QVENDA, group=year_sale, color=year_sale)) +
+     geom_line() +
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0),legend.title = element_blank(), legend.position = "none") +
+  scale_x_discrete(breaks = every_nth(n = 24)) +
+    labs(y = "PIL (ton)")
+
+```    
+ 
+Fig. 16: Desembarques mensais de sardinha realizados pela frota de cerco desde 2005 até 2020. 
+
+```{r plot desembarques mensais ST area PIL, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE=="PIL",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, month_sale, zona) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=month_sale, y=QVENDA, group=year_sale, color=year_sale)) +
+     geom_line() +
+    facet_grid(zona~., scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    labs(y = "PIL (ton)")
+
+``` 
+ 
+Fig. 17: Desembarques mensais de sardinha realizados pela frota de cerco por zona, desde 2005 até 2020.
+ 
+Apresenta-se série temporal dos desembarques  de cavala realizados pela frota de cerco por ano, porto e zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 18 a 21). 
+
+```{r plot porto area MAS, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("MAS"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="NW") %>% 
+  filter(!PORTO %in% c("AFURADA", "VIANA DO CASTELO", "POVOA DO VARZIM")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+     theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "MAS (ton)")
+
+```
+
+Fig. 18: Desembarques mensais de cavala realizados pela frota de cerco por zona NW e nos portos principais, desde 2005 até 2020. 
+ 
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("MAS"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="SW") %>% 
+  filter(!PORTO %in% c("CASCAIS", "COSTA DA CAPARICA", "NAZARE", "SETUBAL")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+     theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "MAS (ton)")
+
+```
+
+Fig. 19: Desembarques mensais de cavala realizados pela frota de cerco por zona SW e nos portos principais, desde 2005 até 2020. 
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("MAS"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="S") %>% 
+  filter(!PORTO %in% c("TAVIRA", "VRSA", "LAGOS", "SAGRES")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y") +
+    theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "MAS (ton)")
+
+```  
+
+Fig. 20: Desembarques mensais de cavala realizados pela frota de cerco por zona S e nos portos principais, desde 2005 até 2020. 
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+Portos_menores_MAS <- c("AFURADA", "VIANA DO CASTELO", "POVOA DO VARZIM",
+                    "CASCAIS", "COSTA DA CAPARICA", "NAZARE", "SETUBAL",
+                    "TAVIRA", "VRSA","LAGOS", "SAGRES")
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("MAS"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  # filter(zona =="S") %>% 
+  filter(!PORTO %in% Portos_menores_MAS) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_wrap(zona~PORTO, scales= "free_y", ncol=4) +
+    theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "MAS (ton)")
+
+```  
+
+Fig. 21: Desembarques mensais de cavala realizados pela frota de cerco por zona e nos portos principais, desde 2005 até 2020. 
+
+Apresenta-se série temporal dos desembarques mensais  de cavala realizados pela frota de cerco por zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 22 a 23). 
+
+```{r plot desembarques mes ano ST area MAS 2, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE=="MAS",] %>%
+  filter(year_sale %in% c(2005:2020)) %>%
+  # filter(zona == "SW") %>%
+  group_by(year_sale, mes_ano) %>%
+  summarise(QVENDA=sum(QVENDA)/1000) %>%
+    ggplot(aes(x=mes_ano, y=QVENDA, group=year_sale, color=year_sale)) +
+     geom_line() +
+    # facet_grid(zona~., scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 24)) +
+    labs(y = "MAS (ton)")
+
+```    
+ 
+Fig. 22: Desembarques mensais de cavala realizados pela frota de cerco desde 2005 até 2020. 
+ 
+```{r plot desembarques mensais ST area MAS, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE=="MAS",] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, month_sale, zona) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=month_sale, y=QVENDA, group=year_sale, color=year_sale)) +
+     geom_line() +
+    facet_grid(zona~., scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    labs(y = "MAS (ton)")
+
+``` 
+
+Fig. 23: Desembarques mensais de cavala realizados pela frota de cerco por zona desde 2005 até 2020.  
+  
+Apresenta-se série temporal dos desembarques  de carapau-branco realizados pela frota de cerco por ano, porto e zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 24 a 27). 
+ 
+```{r plot porto area HOM, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("HOM"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="NW") %>% 
+  filter(!PORTO %in% c("AFURADA","POVOA DO VARZIM")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+     theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "HOM (ton)")
+
+```
+
+Fig. 24: Desembarques mensais de carapau-branco realizados pela frota de cerco por zona NW e nos portos principais, desde 2005 até 2020. 
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("HOM"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="SW") %>% 
+  filter(!PORTO %in% c("CASCAIS", "COSTA DA CAPARICA")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+    theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "HOM (ton)")
+
+```
+
+Fig. 25: Desembarques mensais de carapau-branco realizados pela frota de cerco por zona SW e nos portos principais, desde 2005 até 2020. 
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("HOM"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="S") %>% 
+  filter(!PORTO %in% c("TAVIRA", "VRSA")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "HOM (ton)")
+
+```  
+ 
+Fig. 26: Desembarques mensais de carapau-branco realizados pela frota de cerco por zona S e nos portos principais, desde 2005 até 2020.  
+ 
+```{r, fig.width=20, fig.height=10, echo=F}
+
+Portos_menores_HOM <- c("AFURADA", "VIANA DO CASTELO", "POVOA DO VARZIM",
+                    "CASCAIS", "COSTA DA CAPARICA",
+                    "TAVIRA", "VRSA")
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("HOM"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  # filter(zona =="S") %>% 
+  filter(!PORTO %in% Portos_menores_HOM) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_wrap(zona~PORTO, scales= "free_y", ncol=4)+
+     theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "HOM (ton)")
+
+```  
+ 
+Fig. 27: Desembarques mensais de carapau-branco realizados pela frota de cerco por zona e nos portos principais, desde 2005 até 2020.  
+ 
+Apresenta-se série temporal dos desembarques mensais  de carapau-branco realizados pela frota de cerco por zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 28 a 29).  
+
+```{r plot desembarques mes ano ST area HOM 2, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE=="HOM",] %>% ## trocando spp 
+  filter(year_sale %in% c(2005:2020)) %>%
+  # filter(zona == "SW") %>% ## filtrar por zona
+  group_by(year_sale, mes_ano) %>%
+  summarise(QVENDA=sum(QVENDA)/1000) %>%
+  ggplot(aes(x=mes_ano, y=QVENDA, group=year_sale, color=year_sale)) +
+  geom_line() +
+   theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+  scale_x_discrete(breaks = every_nth(n = 24)) +
+  labs(y = "HOM (ton)")
+
+```    
+
+Fig. 28: Desembarques mensais de carapau-branco realizados pela frota de cerco por zona desde 2005 até 2020.
+  
+```{r plot desembarques mensais ST area HOM, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE=="HOM",] %>% ## trocando spp 
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, month_sale, zona) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+  ggplot(aes(x=month_sale, y=QVENDA, group=year_sale, color=year_sale)) +
+  geom_line() +
+  facet_grid(zona~., scales= "free_y")+
+    theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") + 
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+  labs(y = "HOM (ton)")
+
+```  
+
+Fig. 29: Desembarques mensais de carapau-branco realizados pela frota de cerco por zona desde 2005 até 2020.  
+  
+Apresenta-se série temporal dos desembarques  de biqueirão realizados pela frota de cerco por ano, porto e zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 30 a 33).  
+
+```{r plot porto area ANE, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("ANE"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="NW") %>% 
+  filter(!PORTO %in% c("VIANA DO CASTELO","AFURADA","POVOA DO VARZIM")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "ANE (ton)")
+
+```
+
+Fig. 30: Desembarques mensais de  biqueirão realizados pela frota de cerco por zona NW e nos portos principais, desde 2005 até 2020.  
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("ANE"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="SW") %>% 
+  filter(!PORTO %in% c("CASCAIS", "COSTA DA CAPARICA")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_wrap(zona~PORTO, scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "ANE (ton)")
+
+```
+
+Fig. 31: Desembarques mensais de  biqueirão realizados pela frota de cerco por zon SW e nos portos principais, desde 2005 até 2020.  
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("ANE"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  filter(zona =="S") %>% 
+  filter(!PORTO %in% c("TAVIRA", "VRSA", "SAGRES")) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_grid(zona~PORTO, scales= "free_y")+
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "ANE (ton)")
+
+```
+
+Fig. 32: Desembarques mensais de biqueirão realizados pela frota de cerco por zona S e nos portos principais, desde 2005 até 2020.  
+
+```{r, fig.width=20, fig.height=10, echo=F}
+
+Portos_menores_ANE <- c("AFURADA", "VIANA DO CASTELO", "POVOA DO VARZIM",
+                    "CASCAIS", "COSTA DA CAPARICA",
+                    "TAVIRA", "VRSA", "SAGRES")
+
+frotafinal_land[frotafinal_land$EESPECIE %in% c("ANE"),] %>%
+  filter(year_sale %in% c(2005:2020)) %>% 
+  # filter(zona =="S") %>% 
+  filter(!PORTO %in% Portos_menores_ANE) %>%  ## tirar o ruido este porto
+  group_by(year_sale, zona, PORTO, EESPECIE) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+    ggplot(aes(x=year_sale, y=QVENDA, group=EESPECIE, color=EESPECIE)) +
+    geom_line(size = 0.6) +
+    # geom_bar(stat="identity")+
+    facet_wrap(zona~PORTO, scales= "free_y", ncol=4) +
+      theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+    scale_x_discrete(breaks = every_nth(n = 2)) +
+    labs(y = "ANE (ton)")
+
+```  
+
+Fig. 33: Desembarques mensais de biqueirão realizados pela frota de cerco por zona e nos portos principais, desde 2005 até 2020.  
+
+Apresenta-se série temporal dos desembarques mensais  de biqueirão realizados pela frota de cerco por zona (Noroeste, Sudoeste e Sul) no período de 2003 até 2020 (Fig. 34 a 35).
+
+```{r plot desembarques mes ano ST area ANE 2, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE=="ANE",] %>% ## trocando spp 
+  filter(year_sale %in% c(2005:2020)) %>%
+  # filter(zona == "SW") %>% ## filtrar por zona
+  group_by(year_sale, mes_ano) %>%
+  summarise(QVENDA=sum(QVENDA)/1000) %>%
+  ggplot(aes(x=mes_ano, y=QVENDA, group=year_sale, color=year_sale)) +
+  geom_line() +
+   theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+  scale_x_discrete(breaks = every_nth(n = 24)) +
+  labs(y = "ANE (ton)")
+
+```
+
+Fig. 34: Desembarques mensais de biqueirão realizados pela frota de cerco desde 2005 até 2020.
+
+```{r plot desembarques mensais ST area ANE, fig.width=20, fig.height=10, echo=F, message = F}
+
+frotafinal_land[frotafinal_land$EESPECIE=="ANE",] %>% ## trocando spp 
+  filter(year_sale %in% c(2005:2020)) %>% 
+  group_by(year_sale, month_sale, zona) %>% 
+  summarise(QVENDA=sum(QVENDA)/1000) %>% 
+  ggplot(aes(x=month_sale, y=QVENDA, group=year_sale, color=year_sale)) +
+  geom_line() +
+  facet_grid(zona~., scales= "free_y")+
+    theme_bw()+  
+      # theme(panel.background = element_blank(), 
+      #     axis.line = element_line(color='black'),legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 0), legend.title = element_blank(), legend.position = "none") +
+  scale_x_discrete(breaks = every_nth(n = 2)) +
+  labs(y = "ANE (ton)")
+
+```
+
+Fig. 35: Desembarques mensais de biqueirão realizados pela frota de cerco por zona desde 2005 até 2020.
+  
